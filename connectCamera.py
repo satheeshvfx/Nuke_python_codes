@@ -1,34 +1,44 @@
+"""Connects user selected camera using a Dot node anywhere from the script.
+"""
 ### connect camera v1.0
-### connects user selected camera using a Dot node anywhere from the script
-### for bugs and reports satheesrev@gmail.com
-### thanks to Wouter Gilsing for helping out to make this happen
+### For bugs and reports satheesrev@gmail.com
+### Thanks to Wouter Gilsing for helping out to make this happen
 
 import nuke
 
+def _cameraPanel(cameras):
+	"""Creates a nuke panel and provide selected Camera.
+
+	Arguments:
+		cameras (str) : string of camera name seprated by space.
+	Returns:
+		Camera name of selected else None if user cancels.
+	"""
+    panel = nuke.Panel("connectCamera", 100)
+    panel.addEnumerationPulldown('selectCamera', cameras)
+    panel.addButton("cancel")
+    panel.addButton("connect")
+    if panel.show() != 0:
+    	return panel.value("selectCamera")
+
 def connectCamera():
-    ###getting list of camera's available in the script
-    cameraNames = ' '.join([n.name() for n in nuke.allNodes('Camera2')])
-    if cameraNames:
-        ###Creating nuke panel and storing informations
-        panel = nuke.Panel("connectCamera", 100)
-        panel.addEnumerationPulldown('selectCamera', cameraNames)
-        panel.addButton("cancel")
-        panel.addButton("connect")
-        result = panel.show()
-        selCamera = panel.value("selectCamera")
+	"""Connects the camera .
+	"""
+    # Getting all available cameras in the nukescript.
+    cameras = ' '.join([n.name() for n in nuke.allNodes('Camera2')])
+    if not cameras:
+    	msg = '<center>No Camera Found\nimport some camera to connect.'
+		nuke.message(msg)
+		return
 
-        ### return function when user hit cancel
-        if result == 0:
-            return
-        else:
-            ### creating DOt node and connect with selected camera
-            dot = nuke.createNode("Dot", inpanel=False)
-            dot.setInput(0, nuke.toNode(selCamera))
-            dot['label'].setValue(' \n'+selCamera)
-            dot['note_font_size'].setValue(20)
-            dot['note_font'].setValue('Bitstream Vera Sans Bold')
-            dot['hide_input'].setValue(True)
+    selCamera = _cameraPanel(cameras)
 
-    else:
-        nuke.message('<center>No Camera Found\nimport some camera to connect')
-
+    if not selCamera:
+    	return
+    # Creating a Dot node and connect with selected camera
+    dot = nuke.createNode("Dot", inpanel=False)
+    dot.setInput(0, nuke.toNode(selCamera))
+    dot['label'].setValue(' \n'+selCamera)
+    dot['note_font_size'].setValue(20)
+    dot['note_font'].setValue('Bitstream Vera Sans Bold')
+    dot['hide_input'].setValue(True)
